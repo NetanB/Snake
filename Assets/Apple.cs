@@ -44,7 +44,6 @@ public class Apple : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Apple is eaten by snake - handled by Snake script
-        // We don't need to do anything here since Snake calls RandomizePosition
+        
     }
 }
