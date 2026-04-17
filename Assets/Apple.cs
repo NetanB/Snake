@@ -8,14 +8,14 @@ public class Apple : MonoBehaviour
 
     private void Awake()
     {
-        snake = Object.FindFirstObjectByType<Snake>();
+        snake = Object.FindAnyObjectByType<Snake>();
     }
 
     private void Start()
     {
         if (snake == null)
         {
-            snake = Object.FindFirstObjectByType<Snake>();
+            snake = Object.FindAnyObjectByType<Snake>();
         }
         RandomizePosition();
     }

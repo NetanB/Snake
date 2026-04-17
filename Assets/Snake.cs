@@ -11,6 +11,8 @@ public class Snake : MonoBehaviour
     public float speedMultiplier = 1f;
     public int initialSize = 4;
     public bool moveThroughWalls = false;
+    [SerializeField] private AudioSource eatSound;
+    private bool isResetting = false;
 
     private readonly List<Transform> segments = new List<Transform>();
     private Vector2Int input;
@@ -68,9 +70,9 @@ private void Update()
         }
 
        int x = Mathf.RoundToInt(transform.position.x) + direction.x;
-int y = Mathf.RoundToInt(transform.position.y) + direction.y;
+        int y = Mathf.RoundToInt(transform.position.y) + direction.y;
 
-// 🚨 Check self-collision BEFORE moving
+// 
 if (Occupies(x, y))
 {
     ResetState();
@@ -92,29 +94,36 @@ transform.position = new Vector2(x, y);
     }
 
     public void ResetState()
+{
+    isResetting = true;
+
+    direction = Vector2Int.right;
+    input = Vector2Int.zero;
+    transform.position = Vector3.zero;
+
+    for (int i = 1; i < segments.Count; i++)
     {
-        direction = Vector2Int.right;
-        input = Vector2Int.zero;
-        transform.position = Vector3.zero;
-
-        // Start at 1 to skip destroying the head
-        for (int i = 1; i < segments.Count; i++)
-        {
-            if (segments[i] != null)
-                Destroy(segments[i].gameObject);
-        }
-
-        // Clear the list but add back this as the head
-        segments.Clear();
-        segments.Add(transform);
-
-        // -1 since the head is already in the list
-        for (int i = 0; i < initialSize - 1; i++)
-        {
-            Grow();
-        }
+        if (segments[i] != null)
+            Destroy(segments[i].gameObject);
     }
 
+    segments.Clear();
+    segments.Add(transform);
+
+    for (int i = 0; i < initialSize - 1; i++)
+    {
+        Grow();
+    }
+
+    // re-enable triggers after a short delay
+    StartCoroutine(ResetCooldown());
+}
+
+private IEnumerator ResetCooldown()
+{
+    yield return new WaitForSeconds(0.1f);
+    isResetting = false;
+}
     public bool Occupies(int x, int y)
     {
         foreach (Transform segment in segments)
@@ -131,18 +140,21 @@ transform.position = new Vector2(x, y);
 
     private void OnTriggerEnter2D(Collider2D other)
 {
+    if (isResetting) return;
+
     if (other.CompareTag("Apple"))
     {
         Grow();
+
+        if (eatSound != null)
+        {
+            eatSound.Play();
+        }
 
         Apple apple = other.GetComponentInParent<Apple>();
         if (apple != null)
         {
             apple.RandomizePosition();
-        }
-        else
-        {
-            Debug.LogWarning("Apple script not found!");
         }
     }
     else if (other.CompareTag("Obstacle"))
